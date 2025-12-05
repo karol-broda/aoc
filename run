@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ ! -f "$ROOT/Makefile" ]]; then
+    ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "")"
+fi
+
+if [[ -z "$ROOT" || ! -f "$ROOT/Makefile" ]]; then
+    echo "error: cannot find repo root" >&2
+    exit 1
+fi
+
+# auto-detect year/day from current directory (e.g., .../2025/day01)
+CWD="$(pwd)"
+YEAR=""
+DAY=""
+LANG="go"
+
+if [[ "$CWD" =~ ([0-9]{4})/day([0-9]{2}) ]]; then
+    YEAR="${BASH_REMATCH[1]}"
+    DAY="${BASH_REMATCH[2]}"
+    LANG="${1:-go}"
+elif [[ $# -ge 2 ]]; then
+    YEAR="$1"
+    DAY="$2"
+    LANG="${3:-go}"
+else
+    echo "usage: run [LANG]           (from a day directory)" >&2
+    echo "       run YEAR DAY [LANG]  (from anywhere)" >&2
+    echo "       LANG: go (default), c" >&2
+    exit 1
+fi
+
+DAY_DIR="$ROOT/$YEAR/day$DAY"
+
+case "$LANG" in
+    c)
+        make -s -C "$ROOT" run YEAR="$YEAR" DAY="$DAY"
+        ;;
+    go)
+        cd "$DAY_DIR" && go run *.go
+        ;;
+    *)
+        echo "error: unknown language '$LANG' (use: go, c)" >&2
+        exit 1
+        ;;
+esac

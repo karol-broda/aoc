@@ -13,6 +13,9 @@ result-*
 *.out
 go.work
 
+# c compiled binaries
+**/day*/main
+
 # ide
 .vscode/
 .idea/

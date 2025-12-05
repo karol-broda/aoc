@@ -19,13 +19,23 @@
         {
           default = pkgs.mkShell {
             packages = with pkgs; [
+              # go
               go
               gopls
               gotools
               go-tools
+
+              # c
+              zig
+              zls
+              gdb
             ];
 
             GOTOOLCHAIN = "local";
+
+            shellHook = ''
+              export PATH="$PWD:$PATH"
+            '';
           };
         }
       );
