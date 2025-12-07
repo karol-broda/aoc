@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+usage() {
+    echo "usage: new DAY [LANG]" >&2
+    echo "       new YEAR DAY [LANG]" >&2
+    echo "       LANG: go (default), c, zig" >&2
+    exit 1
+}
+
+if [[ $# -lt 1 ]]; then
+    usage
+fi
+
+YEAR=""
+DAY=""
+LANG="go"
+
+if [[ $# -eq 1 ]]; then
+    YEAR="$(date +%Y)"
+    DAY="$1"
+    LANG="go"
+elif [[ $# -eq 2 ]]; then
+    if [[ "$2" =~ ^(go|c|zig)$ ]]; then
+        YEAR="$(date +%Y)"
+        DAY="$1"
+        LANG="$2"
+    else
+        YEAR="$1"
+        DAY="$2"
+        LANG="go"
+    fi
+else
+    YEAR="$1"
+    DAY="$2"
+    LANG="$3"
+fi
+
+DAY=$(printf "%02d" "$DAY")
+
+case "$LANG" in
+    go|c|zig) ;;
+    *) echo "error: unknown language '$LANG'" >&2; usage ;;
+esac
+
+DAY_DIR="$ROOT/$YEAR/day$DAY"
+
+if [[ -d "$DAY_DIR" ]]; then
+    echo "error: $DAY_DIR already exists" >&2
+    exit 1
+fi
+
+mkdir -p "$DAY_DIR"
+cp "$ROOT/templates/main.$LANG" "$DAY_DIR/main.$LANG"
+touch "$DAY_DIR/example.txt"
+touch "$DAY_DIR/input.txt"
+
+echo "created $YEAR/day$DAY with $LANG template"
+

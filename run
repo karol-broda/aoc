@@ -11,28 +11,50 @@ if [[ -z "$ROOT" || ! -f "$ROOT/Makefile" ]]; then
     exit 1
 fi
 
+# auto-detect language based on available main files (priority: go > c > zig)
+detect_lang() {
+    local dir="$1"
+    if [[ -f "$dir/main.go" ]]; then
+        echo "go"
+    elif [[ -f "$dir/main.c" ]]; then
+        echo "c"
+    elif [[ -f "$dir/main.zig" ]]; then
+        echo "zig"
+    else
+        echo ""
+    fi
+}
+
 # auto-detect year/day from current directory (e.g., .../2025/day01)
 CWD="$(pwd)"
 YEAR=""
 DAY=""
-LANG="go"
+LANG=""
 
 if [[ "$CWD" =~ ([0-9]{4})/day([0-9]{2}) ]]; then
     YEAR="${BASH_REMATCH[1]}"
     DAY="${BASH_REMATCH[2]}"
-    LANG="${1:-go}"
+    LANG="${1:-}"
 elif [[ $# -ge 2 ]]; then
     YEAR="$1"
     DAY="$2"
-    LANG="${3:-go}"
+    LANG="${3:-}"
 else
     echo "usage: run [LANG]           (from a day directory)" >&2
     echo "       run YEAR DAY [LANG]  (from anywhere)" >&2
-    echo "       LANG: go (default), c" >&2
+    echo "       LANG: go, c, zig (auto-detected if not specified)" >&2
     exit 1
 fi
 
 DAY_DIR="$ROOT/$YEAR/day$DAY"
+
+if [[ -z "$LANG" ]]; then
+    LANG="$(detect_lang "$DAY_DIR")"
+    if [[ -z "$LANG" ]]; then
+        echo "error: no main.go, main.c, or main.zig found in $DAY_DIR" >&2
+        exit 1
+    fi
+fi
 
 case "$LANG" in
     c)
@@ -41,8 +63,11 @@ case "$LANG" in
     go)
         cd "$DAY_DIR" && go run *.go
         ;;
+    zig)
+        cd "$DAY_DIR" && zig run main.zig
+        ;;
     *)
-        echo "error: unknown language '$LANG' (use: go, c)" >&2
+        echo "error: unknown language '$LANG' (use: go, c, zig)" >&2
         exit 1
         ;;
 esac

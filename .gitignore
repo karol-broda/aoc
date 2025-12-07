@@ -15,6 +15,11 @@ go.work
 
 # c compiled binaries
 **/day*/main
+!**/day*/main.zig
+
+# zig
+.zig-cache/
+zig-out/
 
 # ide
 .vscode/
